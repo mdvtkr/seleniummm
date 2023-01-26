@@ -164,16 +164,20 @@ class WebDriver:
         if not self.__inserted_param_check__(inspect.currentframe(), 2, 2):
             print('error param')
             return False
-        sel_elem = Select(element)
-        if index:
-            sel_elem.select_by_index(index)
-        elif text:
-            sel_elem.select_by_visible_text(text)
-        elif value:
-            sel_elem.select_by_value(value)
-        else:
+        try:
+            sel_elem = Select(element)
+            if index:
+                sel_elem.select_by_index(index)
+            elif text:
+                sel_elem.select_by_visible_text(text)
+            elif value:
+                sel_elem.select_by_value(value)
+            else:
+                return False
+            return True
+        except Exception as e:
+            print('select error: ' + e)
             return False
-        return True
 
     def confirm(self, ok=True):
         alert = self.wait_until_alert_visible()
