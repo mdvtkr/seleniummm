@@ -176,7 +176,7 @@ class WebDriver:
                 return False
             return True
         except Exception as e:
-            print('select error: ' + e)
+            print('select error: ' + repr(e))
             return False
 
     def confirm(self, ok=True):
