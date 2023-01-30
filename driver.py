@@ -93,7 +93,7 @@ class WebDriver:
     def click(self, element):
         try:
             element.click()
-        except Exceptions.ElementClickInterceptedException as e:
+        except Exceptions.ElementClickInterceptedException:
             element.send_keys(Keys.ENTER)      # sometimes exception happens
 
     @dispatch(cls=str, id=str, xpath=str, name=str, css=str, tag=str)
@@ -122,7 +122,28 @@ class WebDriver:
             return self.driver.find_element(By.TAG_NAME, tag)
         else:
             return None
-            
+        
+    @dispatch(WebElement, cls=str, id=str, xpath=str, name=str, css=str, tag=str)
+    def find_elements(self, element, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
+        if not self.__inserted_param_check__(inspect.currentframe(), 2, 2):
+            return []
+        
+        if cls:
+            return element.find_elements(By.CLASS_NAME, cls)
+        elif id:
+            return element.find_elements(By.ID, id)
+        elif xpath:
+            return element.find_elements(By.XPATH, xpath)
+        elif name:
+            return element.find_elements(By.NAME, name)
+        elif css:
+            return element.find_elements(By.CSS_SELECTOR, css)
+        elif tag:
+            return element.find_elements(By.TAG_NAME, tag)
+        else:
+            return []
+
+    @dispatch(cls=str, id=str, xpath=str, name=str, css=str, tag=str)
     def find_elements(self, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
         if not self.__inserted_param_check__(inspect.currentframe()):
             return []
