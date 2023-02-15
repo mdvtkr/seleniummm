@@ -61,7 +61,8 @@ class WebDriver:
         urllib_logger.setLevel(logging.WARNING)
 
         self.driver = webdriver.Chrome(options=options, chrome_options=chrome_options)
-        if minimize:
+        self.minimize = minimize
+        if self.minimize:
             self.driver.minimize_window()
 
         print("userAgent: " + self.driver.execute_script('return navigator.userAgent') + "\n\n")
@@ -83,6 +84,8 @@ class WebDriver:
 
     def get(self, url):
         self.driver.get(url)
+        if self.minimize:
+            self.driver.minimize_window()
 
     def get_current_url(self) -> str:
         return self.driver.current_url
@@ -108,7 +111,11 @@ class WebDriver:
     @dispatch(WebElement)
     def click(self, element):
         try:
+            wnd_cnt = len(self.driver.window_handles)
             element.click()
+            if self.minimize and wnd_cnt != len(self.driver.window_handles):
+                self.driver.minimize_window()
+
         except Exceptions.ElementClickInterceptedException:
             element.send_keys(Keys.ENTER)      # sometimes exception happens
 
@@ -257,6 +264,8 @@ class WebDriver:
 
     def switch_to_window(self, idx):
         self.driver.switch_to.window(self.driver.window_handles[idx])
+        if self.minimize:
+            self.driver.minimize_window()
 
     def switch_to_frame(self, idx=None, frame=None):
         if not self.__inserted_param_check__(inspect.currentframe(), at_least=0):
