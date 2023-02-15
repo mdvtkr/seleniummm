@@ -21,7 +21,7 @@ import inspect
 root_path = os.path.dirname(__file__)
 
 class WebDriver:
-    def __init__(self, set_download_path=None, visible=False, driver_path=None, lang='kr', debug_port=None) -> None:
+    def __init__(self, set_download_path=None, visible=False, minimize=False, driver_path=None, lang='kr', debug_port=None) -> None:
         self.update_driver(driver_path)
 
         if set_download_path is None:
@@ -29,17 +29,27 @@ class WebDriver:
 
         options = webdriver.ChromeOptions()
         if not visible: 
-            options.add_argument('--headless')
+            options.headless = True
         options.add_argument('--window-size=1920,1080')
         options.add_argument('-ignore-certificate-errors')
         options.add_argument('--disable-extensions')
         options.add_argument('--no-sandbox')
-        if debug_port is not None:
-            options.add_argument(f'--remote-debugging-port={debug_port}')   # usually 9222
+        chrome_options = None
+
+
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('excludeSwitches', ['enable-logging'])
+        options.add_experimental_option('useAutomationExtension', False)
+        options.add_argument('--disable-blink-features=AutomationControlled')
+
+        if debug_port is not None:  # usually 9222
+            # chrome_options = webdriver.ChromeOptions()
+            # chrome_options.add_experimental_option('debuggerAddress', f'localhost:{debug_port}')
+            options.add_argument(f'--remote-debugging-port={debug_port}')
         options.add_argument("--lang=" + lang)
 
         options.add_argument('--disable-dev-shm-usage')
-        options.add_argument('--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36')
+        options.add_argument('user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36')
         options.add_experimental_option("prefs", {
             "download.default_directory": set_download_path,
             "download.prompt_for_download": False,
@@ -50,20 +60,26 @@ class WebDriver:
         selenium_logger.setLevel(logging.WARNING)
         urllib_logger.setLevel(logging.WARNING)
 
-        self.driver = webdriver.Chrome(options=options)
+        self.driver = webdriver.Chrome(options=options, chrome_options=chrome_options)
+        if minimize:
+            self.driver.minimize_window()
 
         print("userAgent: " + self.driver.execute_script('return navigator.userAgent') + "\n\n")
 
     def close(self):
         self.driver.close()
-        self.driver = None
+
+    def quit(self):
+        if self.driver != None:
+            self.driver.quit()
+            self.driver = None
 
     def wndSize(self, w,h):
         self.driver.set_window_size(w,h)
 
     def __del__(self):
         if self.driver is not None:
-            self.close()
+            self.quit()
 
     def get(self, url):
         self.driver.get(url)
@@ -206,25 +222,10 @@ class WebDriver:
         do = alert.accept if ok else alert.dismiss
         print(f'confirm popup: {alert.text} -> {do.__name__}')
         do()
-    
-    def __get_ec_condition__(self, cls, id, xpath, name, css, tag):
-        condition = None
-        if cls:
-            condition = (By.CLASS_NAME, cls)
-        elif id:
-            condition = (By.ID, id)
-        elif xpath:
-            condition = (By.XPATH, xpath)
-        elif name:
-            condition = (By.NAME, name)
-        elif css:
-            condition = (By.CSS_SELECTOR, css)
-        elif tag:
-            condition = (By.TAG_NAME, tag)
-        return condition
 
     def sleep(self, seconds):
         self.driver.implicitly_wait(seconds)
+
 
     def wait_until_alert_visible(self):
         return WebDriverWait(self.driver, 10).until(EC.alert_is_present())
@@ -246,10 +247,16 @@ class WebDriver:
     def wait_until_element_invisible(self, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
         if not self.__inserted_param_check__(inspect.currentframe()):
             return
-
+        
         condition = self.__get_ec_condition__(cls, id, xpath, name, css, tag)
         return WebDriverWait(self.driver, 10).until(EC.invisibility_of_element(condition))
-        pass
+    
+    def wait_until_window_number_to_be(self, n):
+        return WebDriverWait(self.driver, 10).until(EC.number_of_windows_to_be(n))
+
+
+    def switch_to_window(self, idx):
+        self.driver.switch_to.window(self.driver.window_handles[idx])
 
     def switch_to_frame(self, idx=None, frame=None):
         if not self.__inserted_param_check__(inspect.currentframe(), at_least=0):
@@ -261,6 +268,23 @@ class WebDriver:
             self.driver.switch_to.frame(frame)
         else:
             self.driver.switch_to.default_content()
+
+    
+    def __get_ec_condition__(self, cls, id, xpath, name, css, tag):
+        condition = None
+        if cls:
+            condition = (By.CLASS_NAME, cls)
+        elif id:
+            condition = (By.ID, id)
+        elif xpath:
+            condition = (By.XPATH, xpath)
+        elif name:
+            condition = (By.NAME, name)
+        elif css:
+            condition = (By.CSS_SELECTOR, css)
+        elif tag:
+            condition = (By.TAG_NAME, tag)
+        return condition
 
     def __get_param_list__(self, inspect_frame):
         arg_info = inspect.getargvalues(inspect_frame)
