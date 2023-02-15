@@ -87,6 +87,12 @@ class WebDriver:
         if self.minimize:
             self.driver.minimize_window()
 
+    def open_new_tab(self):
+        self.driver.execute_script('window.open("about:blank")')
+        self.switch_to_window(idx=len(self.driver.window_handles)-1)
+        if self.minimize:
+            self.driver.minimize_window()
+
     def get_current_url(self) -> str:
         return self.driver.current_url
 
