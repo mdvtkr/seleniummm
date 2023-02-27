@@ -65,10 +65,13 @@ class WebDriver:
         if self.minimize:
             self.driver.minimize_window()
 
-        print("userAgent: " + self.driver.execute_script('return navigator.userAgent') + "\n\n")
+        print("userAgent: " + self.script('return navigator.userAgent') + "\n\n")
 
     def close(self):
         self.driver.close()
+
+    def script(self, s):
+        return self.driver.execute_script(s)
 
     def quit(self):
         if self.driver != None:
@@ -88,7 +91,7 @@ class WebDriver:
             self.driver.minimize_window()
 
     def open_new_tab(self):
-        self.driver.execute_script('window.open("about:blank")')
+        self.script('window.open("about:blank")')
         self.switch_to_window(idx=len(self.driver.window_handles)-1)
         if self.minimize:
             self.driver.minimize_window()
@@ -133,6 +136,7 @@ class WebDriver:
         
         self.click(elem)
 
+    @dispatch(cls=str, id=str, xpath=str, name=str, css=str, tag=str)
     def find_element(self, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
         if not self.__inserted_param_check__(inspect.currentframe()):
             return None
@@ -149,6 +153,26 @@ class WebDriver:
             return self.driver.find_element(By.CSS_SELECTOR, css)
         elif tag:
             return self.driver.find_element(By.TAG_NAME, tag)
+        else:
+            return None
+
+    @dispatch(WebElement, cls=str, id=str, xpath=str, name=str, css=str, tag=str)
+    def find_element(self, element, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
+        if not self.__inserted_param_check__(inspect.currentframe(), 2, 2):
+            return None
+
+        if cls:
+            return element.find_element(By.CLASS_NAME, cls)
+        elif id:
+            return element.find_element(By.ID, id)
+        elif xpath:
+            return element.find_element(By.XPATH, xpath)
+        elif name:
+            return element.find_element(By.NAME, name)
+        elif css:
+            return element.find_element(By.CSS_SELECTOR, css)
+        elif tag:
+            return element.find_element(By.TAG_NAME, tag)
         else:
             return None
         
