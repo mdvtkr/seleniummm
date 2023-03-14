@@ -1,6 +1,6 @@
 import logging
 import chromedriver_autoinstaller
-import os;
+import os, platform;
 from multipledispatch import dispatch
 import screeninfo
 import inspect
@@ -156,24 +156,34 @@ class WebDriver:
             
         ActionChains(self.driver).move_to_element(elems[element_idx]).perform()
 
-    @dispatch(WebElement)
-    def click(self, element):
-        try:
-            wnd_cnt = len(self.driver.window_handles)
-            element.click()
-            if self.minimize and wnd_cnt != len(self.driver.window_handles):
-                self.wnd_min()
+    @dispatch(WebElement, open_new_tab=bool)
+    def click(self, element, open_new_tab=False):
+        wnd_cnt = len(self.driver.window_handles)
+        if open_new_tab:
+            wnd_cnt_to_be += 1
+            # linux/windows: control, mac: command
+            cmdkey = Keys.COMMAND if 'darwin' in platform.system().lower() else Keys.COMMAND
+            try:
+                ActionChains(self.driver).key_down(cmdkey).click(element).key_up(cmdkey).perform()
+            except:
+                ActionChains(self.driver).send_keys(cmdkey + Keys.ENTER).perform()
+        else:
+            try:
+                element.click()
+            except Exceptions.ElementClickInterceptedException:
+                element.send_keys(Keys.ENTER)      # sometimes exception happens
 
-        except Exceptions.ElementClickInterceptedException:
-            element.send_keys(Keys.ENTER)      # sometimes exception happens
+        # seems that window resize/move/focused when new tab popups up.
+        if self.minimize and wnd_cnt != len(self.driver.window_handles):
+            self.wnd_min()
 
-    @dispatch(cls=str, id=str, xpath=str, name=str, css=str, tag=str)
-    def click(self, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
+    @dispatch(cls=str, id=str, xpath=str, name=str, css=str, tag=str, open_new_tab=bool)
+    def click(self, cls=None, id=None, xpath=None, name=None, css=None, tag=None, open_new_tab=False):
         elem = self.find_element(cls=cls, id=id, xpath=xpath, name=name, css=css, tag=tag)
         if elem == None:
             return
         
-        self.click(elem)
+        self.click(element=elem, open_new_tab=open_new_tab)
 
     @dispatch(cls=str, id=str, xpath=str, name=str, css=str, tag=str)
     def find_element(self, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
@@ -312,6 +322,13 @@ class WebDriver:
 
         condition = self.__get_ec_condition__(cls, id, xpath, name, css, tag)
         return WebDriverWait(self.driver, self.__wait_timeout).until(EC.visibility_of_element_located(condition))
+    
+    def wait_until_elements_visible(self, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
+        if not self.__inserted_param_check__(inspect.currentframe()):
+            return
+
+        condition = self.__get_ec_condition__(cls, id, xpath, name, css, tag)
+        return WebDriverWait(self.driver, self.__wait_timeout).until(EC.visibility_of_all_elements_located(condition))
 
     def wait_until_element_clickable(self, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
         if not self.__inserted_param_check__(inspect.currentframe()):
