@@ -157,10 +157,9 @@ class WebDriver:
         ActionChains(self.driver).move_to_element(elems[element_idx]).perform()
 
     @dispatch(WebElement, open_new_tab=bool)
-    def click(self, element, open_new_tab=False):
+    def click(self, element:WebElement, open_new_tab:bool=False):
         wnd_cnt = len(self.driver.window_handles)
         if open_new_tab:
-            wnd_cnt_to_be += 1
             # linux/windows: control, mac: command
             cmdkey = Keys.COMMAND if 'darwin' in platform.system().lower() else Keys.COMMAND
             try:
@@ -183,7 +182,7 @@ class WebDriver:
         if elem == None:
             return
         
-        self.click(element=elem, open_new_tab=open_new_tab)
+        self.click(elem, open_new_tab=open_new_tab)
 
     @dispatch(cls=str, id=str, xpath=str, name=str, css=str, tag=str)
     def find_element(self, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
