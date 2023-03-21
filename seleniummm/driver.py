@@ -40,6 +40,7 @@ class WebDriver:
                                           driver_path=driver_path, 
                                           lang=lang, 
                                           debug_port=debug_port)
+            print('undetected_chromedriver initialized.')
         except:
             print(traceback.format_exc())
             print('undetected_chromedriver init failed. fallback to standard selenium')
@@ -48,6 +49,7 @@ class WebDriver:
                                         driver_path=driver_path, 
                                         lang=lang, 
                                         debug_port=debug_port)
+        print('dbg port: ' + str(debug_port))
             
         self.hide = hide
         if self.hide:

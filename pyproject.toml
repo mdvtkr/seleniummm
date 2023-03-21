@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "seleniummm"
-version = "0.3.0"
+version = "0.3.1"
 description = "selenium wrapper"
 authors = ["mdvtkr <mdvtkr@gmail.com>"]
 license = "Apache Software License (Apache 2.0)"
