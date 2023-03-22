@@ -31,7 +31,10 @@ class WebDriver:
                  driver_path=None, 
                  lang='kr', 
                  debug_port=None) -> None:
-        self.__monitors = screeninfo.get_monitors()
+        try:
+            self.__monitors = screeninfo.get_monitors()
+        except:
+            self.__monitors = None
 
         # try undetected driver first. selenium webdriver is fallback.
         try:
@@ -75,7 +78,10 @@ class WebDriver:
         if not visible: 
             # options.headless = True
             options.add_argument('--headless')
-        options.add_argument(f'--window-size={self.__monitors[0].width},{self.__monitors[0].height}')
+        if self.__monitors == None:
+            options.add_argument(f'--window-size={self.__monitors[0].width},{self.__monitors[0].height}')
+        else:
+            options.add_argument(f'--window-size=1920,1080')
         options.add_argument('-ignore-certificate-errors')
         options.add_argument('--disable-extensions')
         options.add_argument('--no-sandbox')
@@ -121,7 +127,10 @@ class WebDriver:
         if not visible: 
             # options.headless = True
             options.add_argument('--headless')
-        options.add_argument(f'--window-size={self.__monitors[0].width},{self.__monitors[0].height}')
+        if self.__monitors == None:
+            options.add_argument(f'--window-size={self.__monitors[0].width},{self.__monitors[0].height}')
+        else:
+            options.add_argument(f'--window-size=1920,1080')
         options.add_argument('-ignore-certificate-errors')
         options.add_argument('--disable-extensions')
         options.add_argument('--no-sandbox')
