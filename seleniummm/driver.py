@@ -78,7 +78,7 @@ class WebDriver:
         if not visible: 
             # options.headless = True
             options.add_argument('--headless')
-        if self.__monitors == None:
+        if self.__monitors != None:
             options.add_argument(f'--window-size={self.__monitors[0].width},{self.__monitors[0].height}')
         else:
             options.add_argument(f'--window-size=1920,1080')
@@ -127,7 +127,7 @@ class WebDriver:
         if not visible: 
             # options.headless = True
             options.add_argument('--headless')
-        if self.__monitors == None:
+        if self.__monitors != None:
             options.add_argument(f'--window-size={self.__monitors[0].width},{self.__monitors[0].height}')
         else:
             options.add_argument(f'--window-size=1920,1080')
