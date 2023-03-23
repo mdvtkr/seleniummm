@@ -225,12 +225,17 @@ class WebDriver:
 
         print('chromedriver: ' + chromedriver_autoinstaller.install(False, driver_path))
 
+    @dispatch(WebElement)
+    def mouse_over(self, element):            
+        ActionChains(self.driver).move_to_element(element).perform()
+
+    @dispatch(cls=str, id=str, xpath=str, name=str, css=str, tag=str, element_idx=int)
     def mouse_over(self, cls=None, id=None, xpath=None, name=None, css=None, tag=None, element_idx=0):        
         elems = self.find_elements(cls=cls, id=id, xpath=xpath, name=name, css=css, tag=tag)
-        if elems == None or len(elems) == 0:
+        if elems == None or len(elems) == 0 or len(elems) < element_idx:
             return
-            
-        ActionChains(self.driver).move_to_element(elems[element_idx]).perform()
+        
+        self.mouse_over(element=elems[element_idx])
 
     @dispatch(WebElement, open_new_tab=bool)
     def click(self, element:WebElement, open_new_tab:bool=False):
