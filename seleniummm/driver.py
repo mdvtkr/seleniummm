@@ -235,7 +235,7 @@ class WebDriver:
         if elems == None or len(elems) == 0 or len(elems) < element_idx:
             return
         
-        self.mouse_over(element=elems[element_idx])
+        self.mouse_over(elems[element_idx])
 
     @dispatch(WebElement, open_new_tab=bool)
     def click(self, element:WebElement, open_new_tab:bool=False):
