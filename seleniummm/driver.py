@@ -28,6 +28,7 @@ class WebDriver:
                  minimize=False, 
                  hide=False, 
                  wait_timeout_sec=10,
+                 driver_preference=None,
                  driver_path=None, 
                  lang='kr', 
                  debug_port=None) -> None:
@@ -36,22 +37,38 @@ class WebDriver:
         except:
             self.__monitors = None
 
-        # try undetected driver first. selenium webdriver is fallback.
-        try:
-            self.__init_undetected_driver(set_download_path=set_download_path, 
-                                          visible=visible, 
-                                          driver_path=driver_path, 
-                                          lang=lang, 
-                                          debug_port=debug_port)
-            print('undetected_chromedriver initialized.')
-        except:
-            print(traceback.format_exc())
-            print('undetected_chromedriver init failed. fallback to standard selenium')
+        self.driver = None
+        if driver_preference == 'standard':
             self.__init_selenium_driver(set_download_path=set_download_path, 
                                         visible=visible, 
                                         driver_path=driver_path, 
                                         lang=lang, 
                                         debug_port=debug_port)
+        elif driver_preference == 'undetected':
+            self.__init_undetected_driver(set_download_path=set_download_path, 
+                                          visible=visible, 
+                                          driver_path=driver_path, 
+                                          lang=lang, 
+                                          debug_port=debug_port)
+        else:
+            # try undetected driver first. selenium webdriver is fallback.
+            try:
+                self.__init_undetected_driver(set_download_path=set_download_path, 
+                                            visible=visible, 
+                                            driver_path=driver_path, 
+                                            lang=lang, 
+                                            debug_port=debug_port)
+            except:
+                print(traceback.format_exc())
+                print('undetected_chromedriver init failed. fallback to standard selenium')
+                self.__init_selenium_driver(set_download_path=set_download_path, 
+                                            visible=visible, 
+                                            driver_path=driver_path, 
+                                            lang=lang, 
+                                            debug_port=debug_port)
+                
+        if self.driver == None:
+            raise Exception('driver initialization error.')
         print('dbg port: ' + str(debug_port))
             
         self.hide = hide
@@ -156,6 +173,7 @@ class WebDriver:
         })
 
         self.driver = uwebdriver.Chrome(options)
+        print('undetected_chromedriver initialized.')
 
     def close(self):
         self.driver.close()
