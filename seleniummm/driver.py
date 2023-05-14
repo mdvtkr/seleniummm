@@ -231,6 +231,9 @@ class WebDriver:
 
     def get_current_url(self) -> str:
         return self.driver.current_url
+    
+    def get_cookies(self):
+        return self.driver.get_cookies()
 
     def update_driver(self, driver_path):
         # install selenium chrome driver
