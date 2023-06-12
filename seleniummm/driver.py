@@ -102,7 +102,6 @@ class WebDriver:
         options.add_argument('-ignore-certificate-errors')
         options.add_argument('--disable-extensions')
         options.add_argument('--no-sandbox')
-        chrome_options = None
 
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
@@ -110,8 +109,6 @@ class WebDriver:
         options.add_argument('--disable-blink-features=AutomationControlled')
 
         if debug_port is not None:  # usually 9222
-            # chrome_options = webdriver.ChromeOptions()
-            # chrome_options.add_experimental_option('debuggerAddress', f'localhost:{debug_port}')
             options.add_argument(f'--remote-debugging-port={debug_port}')
         options.add_argument("--lang=" + lang)
 
@@ -127,7 +124,7 @@ class WebDriver:
         selenium_logger.setLevel(logging.WARNING)
         urllib_logger.setLevel(logging.WARNING)
 
-        self.driver = webdriver.Chrome(options=options, chrome_options=chrome_options)
+        self.driver = webdriver.Chrome(options=options)
 
         # print("userAgent: " + self.script('return navigator.userAgent') + "\n\n")
 
@@ -158,8 +155,6 @@ class WebDriver:
         options.add_argument('--disable-blink-features=AutomationControlled')
 
         if debug_port is not None:  # usually 9222
-            # chrome_options = webdriver.ChromeOptions()
-            # chrome_options.add_experimental_option('debuggerAddress', f'localhost:{debug_port}')
             options.add_argument(f'--remote-debugging-port={debug_port}')
         options.add_argument("--lang=" + lang)
 
@@ -257,6 +252,9 @@ class WebDriver:
             return
         
         self.mouse_over(elems[element_idx])
+    
+    def mouse_over_with_offset(self, element, x, y):
+        
 
     @dispatch(WebElement, open_new_tab=bool)
     def click(self, element:WebElement, open_new_tab:bool=False):
