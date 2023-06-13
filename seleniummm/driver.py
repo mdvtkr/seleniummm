@@ -253,9 +253,6 @@ class WebDriver:
         
         self.mouse_over(elems[element_idx])
     
-    def mouse_over_with_offset(self, element, x, y):
-        
-
     @dispatch(WebElement, open_new_tab=bool)
     def click(self, element:WebElement, open_new_tab:bool=False):
         wnd_cnt = len(self.driver.window_handles)
