@@ -9,6 +9,7 @@ import traceback
 
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.remote.shadowroot import ShadowRoot
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
@@ -300,6 +301,26 @@ class WebDriver:
             return self.driver.find_element(By.TAG_NAME, tag)
         else:
             return None
+        
+    @dispatch(ShadowRoot, cls=str, id=str, xpath=str, name=str, css=str, tag=str)
+    def find_element(self, shadow, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
+        if not self.__inserted_param_check__(inspect.currentframe(), 2, 2):
+            return None
+
+        if cls:
+            return shadow.find_element(By.CLASS_NAME, cls)
+        elif id:
+            return shadow.find_element(By.ID, id)
+        elif xpath:
+            return shadow.find_element(By.XPATH, xpath)
+        elif name:
+            return shadow.find_element(By.NAME, name)
+        elif css:
+            return shadow.find_element(By.CSS_SELECTOR, css)
+        elif tag:
+            return shadow.find_element(By.TAG_NAME, tag)
+        else:
+            return None
 
     @dispatch(WebElement, cls=str, id=str, xpath=str, name=str, css=str, tag=str)
     def find_element(self, element, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
@@ -320,6 +341,26 @@ class WebDriver:
             return element.find_element(By.TAG_NAME, tag)
         else:
             return None
+        
+    @dispatch(ShadowRoot, cls=str, id=str, xpath=str, name=str, css=str, tag=str)
+    def find_elements(self, shadow, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
+        if not self.__inserted_param_check__(inspect.currentframe(), 2, 2):
+            return []
+        
+        if cls:
+            return shadow.find_elements(By.CLASS_NAME, cls)
+        elif id:
+            return shadow.find_elements(By.ID, id)
+        elif xpath:
+            return shadow.find_elements(By.XPATH, xpath)
+        elif name:
+            return shadow.find_elements(By.NAME, name)
+        elif css:
+            return shadow.find_elements(By.CSS_SELECTOR, css)
+        elif tag:
+            return shadow.find_elements(By.TAG_NAME, tag)
+        else:
+            return []
         
     @dispatch(WebElement, cls=str, id=str, xpath=str, name=str, css=str, tag=str)
     def find_elements(self, element, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
@@ -419,6 +460,13 @@ class WebDriver:
         condition = self.__get_ec_condition__(cls, id, xpath, name, css, tag)
         return WebDriverWait(self.driver, self.__wait_timeout).until(EC.visibility_of_element_located(condition))
     
+    def wait_until_elements_presence(self, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
+        if not self.__inserted_param_check__(inspect.currentframe()):
+            return
+
+        condition = self.__get_ec_condition__(cls, id, xpath, name, css, tag)
+        return WebDriverWait(self.driver, self.__wait_timeout).until(EC.presence_of_all_elements_located(condition))
+    
     def wait_until_elements_visible(self, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
         if not self.__inserted_param_check__(inspect.currentframe()):
             return
@@ -460,6 +508,8 @@ class WebDriver:
         else:
             self.driver.switch_to.default_content()
 
+    def expand_shadow_root(self, element):
+        return self.driver.execute_script('return arguments[0].shadowRoot', element)
     
     def __get_ec_condition__(self, cls, id, xpath, name, css, tag):
         condition = None
@@ -483,7 +533,10 @@ class WebDriver:
     
     def __inserted_param_check__(self, inspect_frame, at_least=1, at_most=1):
         params = self.__get_param_list__(inspect_frame)
-        inserted_count = len(params) - params.count(None)
+        # params.count(None) does not work for ShadowRoot. 
+        # count() seems == for check equality.
+        # But ShadowRoot does not support None check using ==, supports 'is'/'is not' only. 
+        inserted_count = len(params) - len([x for x in params if x is None])
         if inserted_count < at_least:
             print('too little params')
             return False
