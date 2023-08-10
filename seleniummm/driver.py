@@ -8,6 +8,7 @@ import undetected_chromedriver as uwebdriver
 import traceback
 
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.remote.shadowroot import ShadowRoot
 from selenium.webdriver.common.keys import Keys
@@ -125,6 +126,9 @@ class WebDriver:
         selenium_logger.setLevel(logging.WARNING)
         urllib_logger.setLevel(logging.WARNING)
 
+        # when chromedriver needs to be selected forcibly...
+        # webdriver_service = Service('./chromedriver/chromedriver')
+        # self.driver = webdriver.Chrome(options=options, service=webdriver_service)
         self.driver = webdriver.Chrome(options=options)
 
         # print("userAgent: " + self.script('return navigator.userAgent') + "\n\n")
@@ -240,7 +244,7 @@ class WebDriver:
         if not os.path.isdir(path):
             os.makedirs(path)
 
-        print('chromedriver: ' + chromedriver_autoinstaller.install(False, driver_path))
+        print('chromedriver autoinstaller: ' + str(chromedriver_autoinstaller.install(False, path)))
 
     @dispatch(WebElement)
     def mouse_over(self, element):            
