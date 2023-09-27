@@ -129,7 +129,7 @@ class WebDriver:
         # when chromedriver needs to be selected forcibly...
         # webdriver_service = Service('./chromedriver/chromedriver')
         # self.driver = webdriver.Chrome(options=options, service=webdriver_service)
-        self.driver = webdriver.Chrome(options=options)
+        self.driver = webdriver.Chrome(service=Service(), options=options)
 
         # print("userAgent: " + self.script('return navigator.userAgent') + "\n\n")
 
