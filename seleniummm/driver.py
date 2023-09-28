@@ -1,5 +1,4 @@
 import logging
-import chromedriver_autoinstaller
 import os, platform
 from multipledispatch import dispatch
 import screeninfo
@@ -88,8 +87,6 @@ class WebDriver:
                                driver_path=None, 
                                lang='kr', 
                                debug_port=None):
-        self.update_driver(driver_path)
-
         if set_download_path is None:
             set_download_path = root_path
 
@@ -234,17 +231,6 @@ class WebDriver:
     
     def get_cookies(self):
         return self.driver.get_cookies()
-
-    def update_driver(self, driver_path):
-        # install selenium chrome driver
-        path = './chromedriver'
-        if driver_path is not None:
-            path = driver_path
-            
-        if not os.path.isdir(path):
-            os.makedirs(path)
-
-        print('chromedriver autoinstaller: ' + str(chromedriver_autoinstaller.install(False, path)))
 
     @dispatch(WebElement)
     def mouse_over(self, element):            
