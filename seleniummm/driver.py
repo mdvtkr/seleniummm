@@ -450,6 +450,13 @@ class WebDriver:
         condition = self.__get_ec_condition__(cls, id, xpath, name, css, tag)
         return WebDriverWait(self.driver, self.__wait_timeout).until(EC.visibility_of_element_located(condition))
     
+    def wait_until_element_presence(self, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
+        if not self.__inserted_param_check__(inspect.currentframe()):
+            return
+
+        condition = self.__get_ec_condition__(cls, id, xpath, name, css, tag)
+        return WebDriverWait(self.driver, self.__wait_timeout).until(EC.presence_of_element_located(condition))
+    
     def wait_until_elements_presence(self, cls=None, id=None, xpath=None, name=None, css=None, tag=None):
         if not self.__inserted_param_check__(inspect.currentframe()):
             return
