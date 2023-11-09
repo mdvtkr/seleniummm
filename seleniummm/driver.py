@@ -25,6 +25,7 @@ root_path = os.path.dirname(__file__)
 class WebDriver:
     def __init__(self, 
                  set_download_path=None, 
+                 disable_download=False,
                  visible=False, 
                  minimize=False, 
                  hide=False, 
@@ -41,12 +42,14 @@ class WebDriver:
         self.driver = None
         if driver_preference == 'standard':
             self.__init_selenium_driver(set_download_path=set_download_path, 
+                                        disable_download=disable_download,
                                         visible=visible, 
                                         driver_path=driver_path, 
                                         lang=lang, 
                                         debug_port=debug_port)
         elif driver_preference == 'undetected':
             self.__init_undetected_driver(set_download_path=set_download_path, 
+                                          disable_download=disable_download,
                                           visible=visible, 
                                           driver_path=driver_path, 
                                           lang=lang, 
@@ -55,6 +58,7 @@ class WebDriver:
             # try undetected driver first. selenium webdriver is fallback.
             try:
                 self.__init_undetected_driver(set_download_path=set_download_path, 
+                                            disable_download=disable_download,
                                             visible=visible, 
                                             driver_path=driver_path, 
                                             lang=lang, 
@@ -63,6 +67,7 @@ class WebDriver:
                 print(traceback.format_exc())
                 print('undetected_chromedriver init failed. fallback to standard selenium')
                 self.__init_selenium_driver(set_download_path=set_download_path, 
+                                            disable_download=disable_download,
                                             visible=visible, 
                                             driver_path=driver_path, 
                                             lang=lang, 
@@ -83,6 +88,7 @@ class WebDriver:
     
     def __init_selenium_driver(self, 
                                set_download_path=None, 
+                               disable_download=False,
                                visible=False, 
                                driver_path=None, 
                                lang='kr', 
@@ -110,16 +116,20 @@ class WebDriver:
         if debug_port is not None:  # usually 9222
             options.add_argument(f'--remote-debugging-port={debug_port}')
         options.add_argument("--lang=" + lang)
-
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36')
-        options.add_experimental_option("prefs", {
+
+        # chrome://prefs-internals/
+        prefs = {
             "download.default_directory": set_download_path,
             "download.prompt_for_download": False,
             "download.directory_upgrade": True,
             "safebrowsing.enabled": True,
             "plugins.always_open_pdf_externally": True
-        })
+        }
+        if disable_download:
+            prefs['download.download_restrictions'] = 3
+        options.add_experimental_option("prefs", prefs)
         selenium_logger.setLevel(logging.WARNING)
         urllib_logger.setLevel(logging.WARNING)
 
@@ -132,6 +142,7 @@ class WebDriver:
 
     def __init_undetected_driver(self, 
                                  set_download_path=None, 
+                                 disable_download=False,
                                  visible=False, 
                                  driver_path=None, 
                                  lang='kr', 
@@ -159,15 +170,19 @@ class WebDriver:
         if debug_port is not None:  # usually 9222
             options.add_argument(f'--remote-debugging-port={debug_port}')
         options.add_argument("--lang=" + lang)
-
         options.add_argument('--disable-dev-shm-usage')
-        options.add_experimental_option("prefs", {
+
+        # chrome://prefs-internals/
+        prefs = {
             "download.default_directory": set_download_path,
             "download.prompt_for_download": False,
             "download.directory_upgrade": True,
             "safebrowsing.enabled": True,
             "plugins.always_open_pdf_externally": True
-        })
+        }
+        if disable_download:
+            prefs['download.download_restrictions'] = 3
+        options.add_experimental_option("prefs", prefs)
 
         self.driver = uwebdriver.Chrome(options)
         print('undetected_chromedriver initialized.')
