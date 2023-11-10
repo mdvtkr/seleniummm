@@ -236,8 +236,9 @@ class WebDriver:
             self.wnd_min()
 
     def open_new_tab(self):
-        self.script('window.open("about:blank")')
-        self.switch_to_window(idx=len(self.driver.window_handles)-1)
+        last_wnd_cnt = len(self.driver.window_handles)
+        self.driver.switch_to.new_window('tab')
+        self.wait_until_window_number_to_be(last_wnd_cnt+1)
         if self.minimize:
             self.wnd_min()
 
@@ -504,7 +505,7 @@ class WebDriver:
         return WebDriverWait(self.driver, self.__wait_timeout).until(EC.number_of_windows_to_be(n))
 
 
-    def switch_to_window(self, idx):
+    def switch_to_window(self, idx=0):
         self.driver.switch_to.window(self.driver.window_handles[idx])
         if self.minimize:
             self.wnd_min()
