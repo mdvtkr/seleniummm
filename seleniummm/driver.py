@@ -3,10 +3,10 @@ import os, platform
 from multipledispatch import dispatch
 import screeninfo
 import inspect
-import undetected_chromedriver as uwebdriver
+import seleniumwire.undetected_chromedriver as uwebdriver
 import traceback
 
-from selenium import webdriver
+from seleniumwire import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.remote.shadowroot import ShadowRoot
@@ -75,6 +75,17 @@ class WebDriver:
                 
         if self.driver == None:
             raise Exception('driver initialization error.')
+
+        if not visible:
+            def interceptor(request):
+                for key in request.headers.keys():
+                    if key.casefold() == 'sec-ch-ua' and 'headless' in request.headers[key].casefold():
+                        org = request.headers[key]
+                        del request.headers[key]
+                        request.headers[key] = org.replace('Headless', '').replace('headless', '').replace('HEADLESS', '')
+                        
+            self.driver.request_interceptor = interceptor
+
         print('dbg port: ' + str(debug_port))
             
         self.hide = hide
@@ -184,7 +195,7 @@ class WebDriver:
             prefs['download.download_restrictions'] = 3
         options.add_experimental_option("prefs", prefs)
 
-        self.driver = uwebdriver.Chrome(options)
+        self.driver = uwebdriver.Chrome(options=options)
         print('undetected_chromedriver initialized.')
 
     def close(self):
