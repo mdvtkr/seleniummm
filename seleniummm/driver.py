@@ -1,5 +1,5 @@
 import logging
-import os, platform
+import os, platform, sys
 from multipledispatch import dispatch
 import screeninfo
 import inspect
@@ -79,7 +79,8 @@ class WebDriver:
             options.add_argument('--disable-extensions')
             options.add_argument('--no-sandbox')
             options.add_argument("--auto-open-devtools-for-tabs")
-            # options.add_argument('--user-data-dir="/Users/dcs/Library/Application Support/Google/Chrome/Default"')
+            options.add_argument('--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36')
+            # options.add_argument('--user-data-dir=/Users/dcs/Library/Application Support/Google/Chrome/Default')
 
             if not undetected:
                 options.add_experimental_option("excludeSwitches", ["enable-automation"])
@@ -219,7 +220,21 @@ class WebDriver:
     def get_current_url(self) -> str:
         return self.driver.current_url
     
-    def get_cookies(self):
+    def get_cookies(self, backup_path=None):
+        cookies = self.driver.get_cookies()
+        if backup_path:
+            if 'time' not in sys.modules:
+                import time
+            if 'json' not in sys.modules:
+                import json
+            if 'Path' not in sys.modules:
+                from pathlib import Path
+
+            p = Path(backup_path)
+            p.mkdir(mode=0o744, parents=True, exist_ok=True)
+            file_name = f'{self.get_current_url()}.{time.strftime("%Y%m%d-%H%M%S", time.localtime())}.json'
+            with (p/file_name).open('w') as f:
+                json.dump(cookies, f)
         return self.driver.get_cookies()
 
     @dispatch(WebElement)
