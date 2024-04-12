@@ -3,10 +3,8 @@ import os, platform
 from multipledispatch import dispatch
 import screeninfo
 import inspect
-import seleniumwire.undetected_chromedriver as uwebdriver
 import traceback
 
-from seleniumwire import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.remote.shadowroot import ShadowRoot
@@ -20,9 +18,27 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.remote.remote_connection import LOGGER as selenium_logger
 from urllib3.connectionpool import log as urllib_logger
 
+from tedious import intent_logger
+info, dbg, err, logger = intent_logger.get('seleniummm')
+
 root_path = os.path.dirname(__file__)
 
+webdriver=None
+uwebdriver=None
+
 class WebDriver:
+    def __import_submodule(self, use_wire):
+        if use_wire:
+            from seleniumwire import webdriver as wd
+            import seleniumwire.undetected_chromedriver as uwd
+        else:
+            from selenium import webdriver as wd
+            import undetected_chromedriver as uwd
+
+        global webdriver, uwebdriver
+        webdriver = wd
+        uwebdriver = uwd
+
     def __init__(self, 
                  set_download_path=None, 
                  disable_download=False,
@@ -33,60 +49,108 @@ class WebDriver:
                  driver_preference=None,
                  driver_path=None, 
                  lang='kr', 
-                 debug_port=None) -> None:
+                 debug_port=None,
+                 use_wire=False) -> None:
+        self.__import_submodule(use_wire)
+        selenium_logger.setLevel(logging.WARNING)
+        urllib_logger.setLevel(logging.WARNING)
+
+        if set_download_path is None:
+            set_download_path = root_path
+
         try:
             self.__monitors = screeninfo.get_monitors()
         except:
             self.__monitors = None
 
+        def create_option(undetected:bool):
+            if undetected:
+                options = uwebdriver.ChromeOptions()
+            else:
+                options = webdriver.ChromeOptions()
+
+            if not visible: 
+                options.add_argument('--headless')
+            if self.__monitors != None:
+                options.add_argument(f'--window-size={self.__monitors[0].width},{self.__monitors[0].height}')
+            else:
+                options.add_argument(f'--window-size=1920,1080')
+            options.add_argument('-ignore-certificate-errors')
+            options.add_argument('--disable-extensions')
+            options.add_argument('--no-sandbox')
+            options.add_argument("--auto-open-devtools-for-tabs")
+            # options.add_argument('--user-data-dir="/Users/dcs/Library/Application Support/Google/Chrome/Default"')
+
+            if not undetected:
+                options.add_experimental_option("excludeSwitches", ["enable-automation"])
+                options.add_experimental_option('excludeSwitches', ['enable-logging'])
+                options.add_experimental_option('useAutomationExtension', False)
+            options.add_argument('--disable-blink-features=AutomationControlled')
+
+            if debug_port is not None:  # usually 9222
+                options.add_argument(f'--remote-debugging-port={debug_port}')
+            options.add_argument("--lang=" + lang)
+            options.add_argument('--disable-dev-shm-usage')
+
+            # chrome://prefs-internals/
+            prefs = {
+                "download.default_directory": set_download_path,
+                "download.prompt_for_download": False,
+                "download.directory_upgrade": True,
+                "safebrowsing.enabled": True,
+                "plugins.always_open_pdf_externally": True
+            }
+            if disable_download:
+                prefs['download.download_restrictions'] = 3
+            options.add_experimental_option("prefs", prefs)
+            return options
+
         self.driver = None
+        # when chromedriver needs to be selected forcibly...
+        # webdriver_service = Service('./chromedriver/chromedriver')
+        # self.driver = webdriver.Chrome(options=options, service=webdriver_service)
         if driver_preference == 'standard':
-            self.__init_selenium_driver(set_download_path=set_download_path, 
-                                        disable_download=disable_download,
-                                        visible=visible, 
-                                        driver_path=driver_path, 
-                                        lang=lang, 
-                                        debug_port=debug_port)
+            self.driver = webdriver.Chrome(service=Service(), options=create_option(False))
+            info('chromedriver(standard) initialized')
         elif driver_preference == 'undetected':
-            self.__init_undetected_driver(set_download_path=set_download_path, 
-                                          disable_download=disable_download,
-                                          visible=visible, 
-                                          driver_path=driver_path, 
-                                          lang=lang, 
-                                          debug_port=debug_port)
+            self.driver = uwebdriver.Chrome(options=create_option(True))
+            info('chromedriver(undetected) initialized')
         else:
             # try undetected driver first. selenium webdriver is fallback.
             try:
-                self.__init_undetected_driver(set_download_path=set_download_path, 
-                                            disable_download=disable_download,
-                                            visible=visible, 
-                                            driver_path=driver_path, 
-                                            lang=lang, 
-                                            debug_port=debug_port)
+                self.driver = uwebdriver.Chrome(options=create_option(True))
             except:
                 print(traceback.format_exc())
-                print('undetected_chromedriver init failed. fallback to standard selenium')
-                self.__init_selenium_driver(set_download_path=set_download_path, 
-                                            disable_download=disable_download,
-                                            visible=visible, 
-                                            driver_path=driver_path, 
-                                            lang=lang, 
-                                            debug_port=debug_port)
+                err('undetected_chromedriver init failed. fallback to standard selenium')
+                self.driver = webdriver.Chrome(service=Service(), options=create_option(False))
+                info('chromedriver(standard) initialized')
                 
         if self.driver == None:
             raise Exception('driver initialization error.')
 
-        if not visible:
-            def interceptor(request):
-                for key in request.headers.keys():
-                    if key.casefold() == 'sec-ch-ua' and 'headless' in request.headers[key].casefold():
-                        org = request.headers[key]
-                        del request.headers[key]
-                        request.headers[key] = org.replace('Headless', '').replace('headless', '').replace('HEADLESS', '')
-                        
-            self.driver.request_interceptor = interceptor
+        # if not visible:
+        #     # def interceptor(request):
+        #     #     required_headers = {
+        #     #         'sec-ch-ua-arch': 'x86',
+        #     #         'sec-ch-ua-bitness': '64',
+        #     #         'sec-ch-ua-full-version': '123.0.6312.107',
+        #     #         'sec-ch-ua-full-version-list': '"Google Chrome";v="123.0.6312.107", "Not:A-Brand";v="8.0.0.0", "Chromium";v="123.0.6312.107"'
+        #     #     }
 
-        print('dbg port: ' + str(debug_port))
+        #     #     for key in request.headers.keys():
+        #     #         if key.casefold() == 'sec-ch-ua' and 'headless' in request.headers[key].casefold():
+        #     #             org = request.headers[key]
+        #     #             del request.headers[key]
+        #     #             request.headers[key] = org.replace('Headless', '').replace('headless', '').replace('HEADLESS', '')
+        #     #         elif key.casefold() in required_headers.keys():
+        #     #             required_headers.pop(key.casefold())
+                
+        #     #     for key in required_headers.keys():
+        #     #         request.headers[key] = required_headers[key]
+                    
+        #     self.driver.request_interceptor = interceptor
+
+        info('port: ' + str(debug_port))
             
         self.hide = hide
         if self.hide:
@@ -97,107 +161,6 @@ class WebDriver:
 
         self.set_wait_timeout(wait_timeout_sec)
     
-    def __init_selenium_driver(self, 
-                               set_download_path=None, 
-                               disable_download=False,
-                               visible=False, 
-                               driver_path=None, 
-                               lang='kr', 
-                               debug_port=None):
-        if set_download_path is None:
-            set_download_path = root_path
-
-        options = webdriver.ChromeOptions()
-        if not visible: 
-            # options.headless = True
-            options.add_argument('--headless')
-        if self.__monitors != None:
-            options.add_argument(f'--window-size={self.__monitors[0].width},{self.__monitors[0].height}')
-        else:
-            options.add_argument(f'--window-size=1920,1080')
-        options.add_argument('-ignore-certificate-errors')
-        options.add_argument('--disable-extensions')
-        options.add_argument('--no-sandbox')
-
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        options.add_experimental_option('useAutomationExtension', False)
-        options.add_argument('--disable-blink-features=AutomationControlled')
-
-        if debug_port is not None:  # usually 9222
-            options.add_argument(f'--remote-debugging-port={debug_port}')
-        options.add_argument("--lang=" + lang)
-        options.add_argument('--disable-dev-shm-usage')
-        options.add_argument('--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36')
-
-        # chrome://prefs-internals/
-        prefs = {
-            "download.default_directory": set_download_path,
-            "download.prompt_for_download": False,
-            "download.directory_upgrade": True,
-            "safebrowsing.enabled": True,
-            "plugins.always_open_pdf_externally": True
-        }
-        if disable_download:
-            prefs['download.download_restrictions'] = 3
-        options.add_experimental_option("prefs", prefs)
-        selenium_logger.setLevel(logging.WARNING)
-        urllib_logger.setLevel(logging.WARNING)
-
-        # when chromedriver needs to be selected forcibly...
-        # webdriver_service = Service('./chromedriver/chromedriver')
-        # self.driver = webdriver.Chrome(options=options, service=webdriver_service)
-        self.driver = webdriver.Chrome(service=Service(), options=options)
-
-        # print("userAgent: " + self.script('return navigator.userAgent') + "\n\n")
-
-    def __init_undetected_driver(self, 
-                                 set_download_path=None, 
-                                 disable_download=False,
-                                 visible=False, 
-                                 driver_path=None, 
-                                 lang='kr', 
-                                 debug_port=None):
-        if set_download_path is None:
-            set_download_path = root_path
-
-        options = uwebdriver.ChromeOptions()
-        if not visible: 
-            # options.headless = True
-            options.add_argument('--headless')
-        if self.__monitors != None:
-            options.add_argument(f'--window-size={self.__monitors[0].width},{self.__monitors[0].height}')
-        else:
-            options.add_argument(f'--window-size=1920,1080')
-        options.add_argument('-ignore-certificate-errors')
-        options.add_argument('--disable-extensions')
-        options.add_argument('--no-sandbox')
-
-        # options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        # options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        # options.add_experimental_option('useAutomationExtension', False)
-        options.add_argument('--disable-blink-features=AutomationControlled')
-
-        if debug_port is not None:  # usually 9222
-            options.add_argument(f'--remote-debugging-port={debug_port}')
-        options.add_argument("--lang=" + lang)
-        options.add_argument('--disable-dev-shm-usage')
-
-        # chrome://prefs-internals/
-        prefs = {
-            "download.default_directory": set_download_path,
-            "download.prompt_for_download": False,
-            "download.directory_upgrade": True,
-            "safebrowsing.enabled": True,
-            "plugins.always_open_pdf_externally": True
-        }
-        if disable_download:
-            prefs['download.download_restrictions'] = 3
-        options.add_experimental_option("prefs", prefs)
-
-        self.driver = uwebdriver.Chrome(options=options)
-        print('undetected_chromedriver initialized.')
-
     def close(self):
         self.driver.close()
 
@@ -439,7 +402,7 @@ class WebDriver:
 
     def select(self, element, index=None, text=None, value=None):
         if not self.__inserted_param_check__(inspect.currentframe(), 2, 2):
-            print('error param')
+            err('error param')
             return False
         try:
             sel_elem = Select(element)
@@ -453,14 +416,14 @@ class WebDriver:
                 return False
             return True
         except Exception as e:
-            print('select error: ' + repr(e))
+            err('select error: ' + repr(e))
             return False
 
     def confirm(self, ok=True):
         alert = self.wait_until_alert_visible()
 
         do = alert.accept if ok else alert.dismiss
-        print(f'confirm popup: {alert.text} -> {do.__name__}')
+        info(f'confirm popup: {alert.text} -> {do.__name__}')
         do()
 
     def sleep(self, seconds):
@@ -562,9 +525,15 @@ class WebDriver:
         # But ShadowRoot does not support None check using ==, supports 'is'/'is not' only. 
         inserted_count = len(params) - len([x for x in params if x is None])
         if inserted_count < at_least:
-            print('too little params')
+            dbg('too little params')
             return False
         elif inserted_count > at_most:
-            print('too many params')
+            dbg('too many params')
             return False
         return True
+
+# FOR TEST
+# if __name__ == '__main__':
+#     driver = WebDriver(visible=True,
+#                         driver_preference='standard',
+#                        use_wire=False)
