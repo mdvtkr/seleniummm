@@ -79,8 +79,9 @@ class WebDriver:
             options.add_argument('--disable-extensions')
             options.add_argument('--no-sandbox')
             options.add_argument("--auto-open-devtools-for-tabs")
+            options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
             options.add_argument('--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36')
-            # options.add_argument('--user-data-dir=/Users/dcs/Library/Application Support/Google/Chrome/Default')
+            # options.add_argument('--user-data-dir="~/Library/Application Support/Google/Chrome/Default"')
 
             if not undetected:
                 options.add_experimental_option("excludeSwitches", ["enable-automation"])
