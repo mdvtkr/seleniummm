@@ -49,6 +49,7 @@ class WebDriver:
                  driver_preference=None,
                  driver_path=None, 
                  lang='kr', 
+                 user_agent=None,
                  debug_port=None,
                  use_wire=False) -> None:
         self.__import_submodule(use_wire)
@@ -63,7 +64,8 @@ class WebDriver:
         except:
             self.__monitors = None
 
-        def create_option(undetected:bool):
+        def create_option(undetected:bool,
+                          user_agent:str=None):
             if undetected:
                 options = uwebdriver.ChromeOptions()
             else:
@@ -80,7 +82,8 @@ class WebDriver:
             options.add_argument('--no-sandbox')
             options.add_argument("--auto-open-devtools-for-tabs")
             options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
-            options.add_argument('--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36')
+            if user_agent:
+                options.add_argument(user_agent)
             # options.add_argument('--user-data-dir="~/Library/Application Support/Google/Chrome/Default"')
 
             if not undetected:
@@ -112,19 +115,19 @@ class WebDriver:
         # webdriver_service = Service('./chromedriver/chromedriver')
         # self.driver = webdriver.Chrome(options=options, service=webdriver_service)
         if driver_preference == 'standard':
-            self.driver = webdriver.Chrome(service=Service(), options=create_option(False))
+            self.driver = webdriver.Chrome(service=Service(), options=create_option(False, user_agent))
             info('chromedriver(standard) initialized')
         elif driver_preference == 'undetected':
-            self.driver = uwebdriver.Chrome(options=create_option(True))
+            self.driver = uwebdriver.Chrome(options=create_option(True, user_agent))
             info('chromedriver(undetected) initialized')
         else:
             # try undetected driver first. selenium webdriver is fallback.
             try:
-                self.driver = uwebdriver.Chrome(options=create_option(True))
+                self.driver = uwebdriver.Chrome(options=create_option(True, user_agent))
             except:
                 print(traceback.format_exc())
                 err('undetected_chromedriver init failed. fallback to standard selenium')
-                self.driver = webdriver.Chrome(service=Service(), options=create_option(False))
+                self.driver = webdriver.Chrome(service=Service(), options=create_option(False, user_agent))
                 info('chromedriver(standard) initialized')
                 
         if self.driver == None:
