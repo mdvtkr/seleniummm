@@ -50,11 +50,14 @@ class WebDriver:
                  driver_path=None, 
                  lang='kr', 
                  user_agent=None,
+                 log_level:str="info",
                  debug_port=None,
                  use_wire=False) -> None:
         self.__import_submodule(use_wire)
-        selenium_logger.setLevel(logging.WARNING)
-        urllib_logger.setLevel(logging.WARNING)
+        urllib_logger.setLevel(logging.INFO)
+        log_level = intent_logger.conv_level_code(log_level)
+        selenium_logger.setLevel(log_level)
+        logger.setLevel(log_level)
 
         if set_download_path is None:
             set_download_path = root_path
