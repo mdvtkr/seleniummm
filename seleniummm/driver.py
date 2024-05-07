@@ -50,6 +50,7 @@ class WebDriver:
                  driver_path=None, 
                  lang='kr', 
                  user_agent=None,
+                 proxy:str=None,
                  log_level:str="info",
                  debug_port=None,
                  use_wire=False) -> None:
@@ -68,7 +69,8 @@ class WebDriver:
             self.__monitors = None
 
         def create_option(undetected:bool,
-                          user_agent:str=None):
+                          user_agent:str=None,
+                          proxy:str=None):
             if undetected:
                 options = uwebdriver.ChromeOptions()
             else:
@@ -80,6 +82,9 @@ class WebDriver:
                 options.add_argument(f'--window-size={self.__monitors[0].width},{self.__monitors[0].height}')
             else:
                 options.add_argument(f'--window-size=1920,1080')
+
+            if proxy:
+                options.add_argument(f'--proxy-server={proxy}')
             options.add_argument('-ignore-certificate-errors')
             options.add_argument('--disable-extensions')
             options.add_argument('--no-sandbox')
@@ -118,19 +123,19 @@ class WebDriver:
         # webdriver_service = Service('./chromedriver/chromedriver')
         # self.driver = webdriver.Chrome(options=options, service=webdriver_service)
         if driver_preference == 'standard':
-            self.driver = webdriver.Chrome(service=Service(), options=create_option(False, user_agent))
+            self.driver = webdriver.Chrome(service=Service(), options=create_option(False, user_agent, proxy))
             info('chromedriver(standard) initialized')
         elif driver_preference == 'undetected':
-            self.driver = uwebdriver.Chrome(options=create_option(True, user_agent))
+            self.driver = uwebdriver.Chrome(options=create_option(True, user_agent, proxy))
             info('chromedriver(undetected) initialized')
         else:
             # try undetected driver first. selenium webdriver is fallback.
             try:
-                self.driver = uwebdriver.Chrome(options=create_option(True, user_agent))
+                self.driver = uwebdriver.Chrome(options=create_option(True, user_agent, proxy))
             except:
                 print(traceback.format_exc())
                 err('undetected_chromedriver init failed. fallback to standard selenium')
-                self.driver = webdriver.Chrome(service=Service(), options=create_option(False, user_agent))
+                self.driver = webdriver.Chrome(service=Service(), options=create_option(False, user_agent, proxy))
                 info('chromedriver(standard) initialized')
                 
         if self.driver == None:
