@@ -53,6 +53,7 @@ class WebDriver:
                  proxy:str=None,
                  log_level:str="info",
                  debug_port=None,
+                 debugger_address=None,
                  use_wire=False) -> None:
         self.__import_submodule(use_wire)
         urllib_logger.setLevel(logging.INFO)
@@ -85,25 +86,21 @@ class WebDriver:
 
             if proxy:
                 options.add_argument(f'--proxy-server={proxy}')
-            options.add_argument('-ignore-certificate-errors')
-            options.add_argument('--disable-extensions')
-            options.add_argument('--no-sandbox')
-            options.add_argument("--auto-open-devtools-for-tabs")
+            # options.add_argument('-ignore-certificate-errors')
+            # options.add_argument('--disable-extensions')
+            # options.add_argument('--no-sandbox')
+            # options.add_argument("--auto-open-devtools-for-tabs")
             options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
             if user_agent:
                 options.add_argument(user_agent)
             # options.add_argument('--user-data-dir="~/Library/Application Support/Google/Chrome/Default"')
 
-            if not undetected:
-                options.add_experimental_option("excludeSwitches", ["enable-automation"])
-                options.add_experimental_option('excludeSwitches', ['enable-logging'])
-                options.add_experimental_option('useAutomationExtension', False)
-            options.add_argument('--disable-blink-features=AutomationControlled')
+            # options.add_argument('--disable-blink-features=AutomationControlled')
 
             if debug_port is not None:  # usually 9222
                 options.add_argument(f'--remote-debugging-port={debug_port}')
-            options.add_argument("--lang=" + lang)
-            options.add_argument('--disable-dev-shm-usage')
+            # options.add_argument("--lang=" + lang)
+            # options.add_argument('--disable-dev-shm-usage')
 
             # chrome://prefs-internals/
             prefs = {
@@ -115,7 +112,14 @@ class WebDriver:
             }
             if disable_download:
                 prefs['download.download_restrictions'] = 3
-            options.add_experimental_option("prefs", prefs)
+            if debugger_address:
+                options.add_experimental_option('debuggerAddress', debugger_address)
+            else:
+                if not undetected:
+                    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+                    options.add_experimental_option('excludeSwitches', ['enable-logging'])
+                    options.add_experimental_option('useAutomationExtension', False)
+                options.add_experimental_option("prefs", prefs)
             return options
 
         self.driver = None
