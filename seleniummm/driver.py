@@ -48,6 +48,7 @@ class WebDriver:
                  wait_timeout_sec=10,
                  driver_preference=None,
                  driver_path=None, 
+                 open_devtools=False,
                  lang='kr', 
                  user_agent=None,
                  proxy:str=None,
@@ -88,7 +89,8 @@ class WebDriver:
             options.add_argument('-ignore-certificate-errors')
             options.add_argument('--disable-extensions')
             options.add_argument('--no-sandbox')
-            options.add_argument("--auto-open-devtools-for-tabs")
+            if open_devtools:
+                options.add_argument("--auto-open-devtools-for-tabs")
             options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
             if user_agent:
                 options.add_argument(user_agent)
@@ -524,6 +526,20 @@ class WebDriver:
 
     def expand_shadow_root(self, element):
         return self.driver.execute_script('return arguments[0].shadowRoot', element)
+    
+    def get_all_window_titles(self, driver):
+        main_window = driver.current_window_handle
+        all_handles = driver.window_handles
+        
+        window_titles = []
+        
+        # Switch to each handle and get title
+        for handle in all_handles:
+            driver.switch_to.window(handle)
+            window_titles.append(driver.title)
+            
+        driver.switch_to.window(main_window)
+        return window_titles
     
     def __get_ec_condition__(self, cls, id, xpath, name, css, tag):
         condition = None
