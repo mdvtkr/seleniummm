@@ -4,6 +4,7 @@ from multipledispatch import dispatch
 import screeninfo
 import inspect
 import traceback
+from selenium_stealth import stealth
 
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.remote.webelement import WebElement
@@ -51,6 +52,7 @@ class WebDriver:
                  open_devtools=False,
                  lang='kr', 
                  user_agent=None,
+                 use_stealth=False,
                  proxy:str=None,
                  log_level:str="info",
                  debug_port=None,
@@ -134,6 +136,7 @@ class WebDriver:
             # try undetected driver first. selenium webdriver is fallback.
             try:
                 self.driver = uwebdriver.Chrome(options=create_option(True, user_agent, proxy))
+                info('chromedriver(standard) initialized')
             except:
                 print(traceback.format_exc())
                 err('undetected_chromedriver init failed. fallback to standard selenium')
@@ -142,6 +145,16 @@ class WebDriver:
                 
         if self.driver == None:
             raise Exception('driver initialization error.')
+        if use_stealth:
+            stealth(
+                self.driver,
+                languages=["ko-KR", "ko"],
+                vendor="Google Inc.",
+                platform="Win32",
+                webgl_vendor="Intel Inc.",
+                renderer="Intel Iris OpenGL Engine",
+                fix_hairline=True,
+            )
 
         # if not visible:
         #     # def interceptor(request):
