@@ -51,6 +51,7 @@ class WebDriver:
                  driver_path=None, 
                  open_devtools=False,
                  lang='kr', 
+                 profile=None,
                  window_size=None,
                  user_agent=None,
                  use_stealth=False,
@@ -99,7 +100,9 @@ class WebDriver:
             options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
             if user_agent:
                 options.add_argument(user_agent)
-            # options.add_argument('--user-data-dir="~/Library/Application Support/Google/Chrome/Default"')
+            if profile:
+                options.add_argument(f'--user-data-dir={profile["root"]}')
+                options.add_argument(f'--profile-directory={profile["name"]}')
 
             if not undetected:
                 options.add_experimental_option("excludeSwitches", ["enable-automation"])
