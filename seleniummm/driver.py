@@ -142,7 +142,7 @@ class WebDriver:
             # try undetected driver first. selenium webdriver is fallback.
             try:
                 self.driver = uwebdriver.Chrome(options=create_option(True, user_agent, proxy))
-                info('chromedriver(standard) initialized')
+                info('chromedriver(undetected) initialized')
             except:
                 print(traceback.format_exc())
                 err('undetected_chromedriver init failed. fallback to standard selenium')

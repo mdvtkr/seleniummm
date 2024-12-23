@@ -2,7 +2,6 @@
 
 poetry config virtualenvs.in-project true --local
 poetry config virtualenvs.create true --local
-poetry config virtualenvs.path ~/.venv --local
 
 VENV_NAME=atwstw
 SHARED_VENV=$HOME/.venv/$VENV_NAME
