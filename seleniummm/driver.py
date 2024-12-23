@@ -99,7 +99,7 @@ class WebDriver:
                 options.add_argument("--auto-open-devtools-for-tabs")
             options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
             if user_agent:
-                options.add_argument(user_agent)
+                options.add_argument(f'--user-agent={user_agent}')
             if profile:
                 options.add_argument(f'--user-data-dir={profile["root"]}')
                 options.add_argument(f'--profile-directory={profile["name"]}')
