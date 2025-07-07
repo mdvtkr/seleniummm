@@ -101,7 +101,7 @@ class WebDriver:
             if user_agent:
                 options.add_argument(f'--user-agent={user_agent}')
             if profile:
-                options.add_argument(f'--user-data-dir={profile["root"]}')
+                options.add_argument(f'--user-data-dir={os.path.expanduser(profile["root"])}')
                 options.add_argument(f'--profile-directory={profile["name"]}')
 
             if not undetected:
