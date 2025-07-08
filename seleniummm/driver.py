@@ -206,6 +206,12 @@ class WebDriver:
     
     def page_up(self):
         self.find_element(tag='body').send_keys(Keys.PAGE_UP)
+    
+    def arrow_down(self):
+        self.find_element(tag='body').send_keys(Keys.DOWN)
+    
+    def arrow_up(self):
+        self.find_element(tag='body').send_keys(Keys.UP)
 
     def quit(self):
         if self.driver != None:
